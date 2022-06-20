@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bubble prepare
-// @version      0.5
+// @version      0.6
 // @description  Bubble prepare
 // @author       Flatformer
 // @updateURL    https://github.com/Filosoff/bubble-user-script/raw/master/bubble.user.js
@@ -43,6 +43,7 @@ const onCsvUpload = e => {
     if (file) {
         const logEl = document.querySelector('.bubble-csv-log');
         Papa.parse(file, {
+            delimiter: ";",
             complete: result => {
                 if (result.data) {
                     document.querySelector(addTextBtnClass).click();
@@ -55,14 +56,18 @@ const onCsvUpload = e => {
                         let content = "---- Новости ----<br/>";
                         result.data.forEach(row => {
                             content += `<p><a href="${row[2]}">${row[0]}</a> ${row[1]}</p><br/>`;
-                            let l = "";
-                            stopWords.forEach(w => {
-                                if (row[1].includes(w)) {
-                                    l += `...содержит слово <b>${w}</b><br/>`;
+                            try {
+                                let l = "";
+                                stopWords.forEach(w => {
+                                    if (row[1] && row[1].includes(w)) {
+                                        l += `...содержит слово <b>${w}</b><br/>`;
+                                    }
+                                });
+                                if (l) {
+                                    logEl.innerHTML += `Новость от ${row[0]}...<br/>${l}<br/>`;
                                 }
-                            });
-                            if (l) {
-                                logEl.innerHTML += `Новость от ${row[0]}...<br/>${l}<br/>`;
+                            } catch (e) {
+                                console.error(e);
                             }
                         })
                         blocks[blocks.length-1].innerHTML = content;
