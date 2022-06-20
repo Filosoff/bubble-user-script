@@ -1,10 +1,9 @@
 // ==UserScript==
 // @name         Bubble prepare
-// @version      0.3
+// @version      0.4
 // @description  Bubble prepare
 // @author       Flatformer
 // @updateURL    https://github.com/Filosoff/bubble-user-script/raw/master/bubble.user.js
-// @downloadURL  https://github.com/Filosoff/bubble-user-script/raw/master/bubble.user.js
 // @match        https://pikabu.ru/add
 // ==/UserScript==
 
