@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Bubble prepare
-// @version      0.8
+// @version      0.9
 // @description  Bubble prepare
 // @author       Flatformer
 // @updateURL    https://github.com/Filosoff/bubble-user-script/raw/master/bubble.user.js
@@ -8,22 +8,16 @@
 // @match        https://pikabu.ru/add
 // ==/UserScript==
 
-// classes
+// class const
+const bubbleCls = "bubble-intruder";
+const logCls = "bubble-csv-log";
+// cssClass
 const btnsWrapperClass = ".sidebar__inner";
-const bubbleButtonsClass = ".bubble-buttons";
-const csvLogClass = ".bubble-csv-log";
+const csvLogClass = `.${logCls}`;
+// xPAth
+const editorXPath = "//*[@id=\"pkb-story-edit-page\"]/div/div[1]/div[1]/div[3]/div/div/div";
 
-// static
-const settings = [
-  {
-    name: 'splitToBlocks',
-    label: 'Разбить на блоки',
-  },
-];
-
-const getElementByXpath = (path) => {
-  return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-}
+const getElementByXpath = (path) => document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 
 const createEl = (tagName, classNames = [], attr = {}, appendTo) => {
   const el = document.createElement(tagName);
@@ -34,7 +28,6 @@ const createEl = (tagName, classNames = [], attr = {}, appendTo) => {
     el[a] = attr[a]
   });
   if (appendTo) {
-    console.error(appendTo);
     if (typeof appendTo === 'string') {
       const parent = document.querySelector(appendTo);
       parent.appendChild(el);
@@ -54,13 +47,10 @@ const addGlobalStyle = (css) => createEl('style', [], {
   innerHTML: css.replace(/;/g, ' !important;')
 }, 'head');
 
-const addToCsvLog = content => {
-  const logEl = document.querySelector(csvLogClass);
-  logEl.innerHTML += content;
-}
+const addToCsvLog = content => document.querySelector(csvLogClass).innerHTML += content;
 
-const addTextBlock = content => {
-  const editor = getElementByXpath('//*[@id="pkb-story-edit-page"]/div/div[1]/div[1]/div[3]/div/div/div');
+const pushTextToEditor = content => {
+  const editor = getElementByXpath(editorXPath);
   const blocks = editor.querySelector('p');
   if (blocks) {
     blocks.innerHTML = content;
@@ -76,15 +66,15 @@ const uploadHandler = result => {
     const url = row.length >= 2 ? row[2] : null;
     const time = row.length >= 0 ? row[0] : null;
     const text = row.length >= 1 ? row[1] : null;
-    console.error(row);
+
     if (url && time) {
-      content += `<p><a href="${url}">${time}</a> ${text || "нет новости"}</p><br/>`;
+      content += `<p><a href="${url}">${time}</a> ${text || "нет новости"}</p><br/><br/>`;
     } else {
-      content += `<p>${text || "нет новости"}</p><br/>`;
+      content += `<p>${text || "нет новости"}</p><br/><br/>`;
     }
   });
 
-  addTextBlock(content);
+  pushTextToEditor(content);
 }
 
 const onCsvUpload = e => {
@@ -103,32 +93,27 @@ const onCsvUpload = e => {
 }
 
 const updateEditor = () => {
-  // main block
   const wrapper = document.querySelector(btnsWrapperClass);
-  const btns = createEl('section', ['bubble-intruder', 'bubble-buttons']);
-  const csvLog = createEl('section', ['bubble-intruder', 'bubble-csv-log']);
-  wrapper.parentNode.insertBefore(csvLog, wrapper.nextSibling);
-  wrapper.parentNode.insertBefore(btns, wrapper.nextSibling);
-  createEl('div', ['bubble-buttons-csv'], {}, bubbleButtonsClass);
-  createEl('h3', [], {innerHTML: 'CSV'}, bubbleButtonsClass);
-  createEl('input', [], {type: 'file', onchange: onCsvUpload}, btns);
 
-  createEl('h3', [], {innerHTML: 'CSV отчет'}, csvLog);
+  const csvLog = createEl('section', [bubbleCls, 'bubble-csv-log']);
+  wrapper.parentNode.insertBefore(csvLog, wrapper.nextSibling);
+  createEl('h3', [], {innerHTML: 'Пузырьковый журнал'}, csvLog);
   createEl('p', [], {innerHTML: 'Жду загрузки файла...'}, csvLog);
+
+  const btns = createEl('section', [bubbleCls, 'bubble-buttons']);
+  wrapper.parentNode.insertBefore(btns, wrapper.nextSibling);
+  createEl('h3', [], {innerHTML: 'Загрузить пузырь'}, btns);
+  createEl('input', [], {type: 'file', onchange: onCsvUpload}, btns);
 
 }
 
 const setup = () => {
-  // for some reason @require doesnt add the script
   const script = document.createElement('script');
   script.src = "https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js";
   document.querySelector('body').appendChild(script);
-  addGlobalStyle('.bubble-intruder .button { display: inline-block; margin-right: 6px; margin-bottom: 6px; width: 45%; }');
   addGlobalStyle('.bubble-intruder h3 { padding-bottom: 4px; border-bottom: 1px solid #333; margin-bottom: 12px; font-weight: 400; margin-top: 12px; }');
-  addGlobalStyle('.bubble-intruder h3 { padding-bottom: 4px; border-bottom: 1px solid #333; margin-bottom: 12px; font-weight: 400; margin-top: 12px; }');
-  addGlobalStyle('.bubble-intruder label { display: flex; align-items: center; margin-bottom: 6px; }');
   addGlobalStyle('.bubble-intruder label input { margin-right: 4px; }');
-  // adding buttons
+
   updateEditor();
 }
 
